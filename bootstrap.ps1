@@ -5,10 +5,11 @@
   What this does:
     1. Installs base programs via winget (Git, Node.js LTS, VS Code, GitHub CLI, Windows Terminal)
     2. Installs the Claude Code CLI natively if missing
-    3. Checks out the private claude-code-config repo into ~/.claude (settings.json, CLAUDE.md,
-       hooks/, commands/, keybindings.json only - never touches sessions/cache/credentials)
-    4. Installs the agency-agents subagent library
-    5. Prints next steps (claude login, gh auth login)
+    3. Checks out the private claude-code-config repo into ~/.claude (settings, CLAUDE.md,
+       hooks/, commands/, keybindings, the curated agents/ and setup/ - never touches
+       sessions/cache/credentials)
+    4. Installs the Impeccable design skill (installer-managed, so not in the repo)
+    5. Prints next steps (claude login, gh auth login, project folder setup)
 
   Safe to re-run - every step is idempotent.
 #>
@@ -104,27 +105,25 @@ finally {
 }
 
 # ---------------------------------------------------------------------------
-# 4. agency-agents subagent library
+# 4. Installer-managed skills
+#
+# Subagents are NOT installed here - the curated set ships inside the config
+# repo from step 3. Only tools with their own installer belong in this step,
+# because a file that an installer owns must not also be tracked by git.
 # ---------------------------------------------------------------------------
-Write-Step "Installing agency-agents subagent library"
+Write-Step "Installing the Impeccable design skill"
 
-$agentsClone = Join-Path $env:TEMP "agency-agents-bootstrap"
-if (Test-Path $agentsClone) { Remove-Item -Recurse -Force $agentsClone }
-git clone --quiet https://github.com/msitarzewski/agency-agents.git $agentsClone
-
-$bashExe = (Get-Command bash -ErrorAction SilentlyContinue).Source
-if (-not $bashExe -and (Test-Path "$env:ProgramFiles\Git\bin\bash.exe")) {
-    $bashExe = "$env:ProgramFiles\Git\bin\bash.exe"
-}
-
-if ($bashExe) {
-    Push-Location $agentsClone
-    & $bashExe "scripts/install.sh" --tool claude-code --no-interactive
-    Pop-Location
-    Remove-Item -Recurse -Force $agentsClone
+if (Test-CommandExists npx) {
+    try {
+        npx -y impeccable@latest install --scope=global --providers=claude-code --yes
+        Write-Host "  Installed (skill, its agents, and its hooks in settings.local.json)"
+    }
+    catch {
+        Write-Warning "  Could not install Impeccable ($($_.Exception.Message)). Run manually later: npx -y impeccable@latest install --scope=global --providers=claude-code --yes"
+    }
 }
 else {
-    Write-Warning "  Could not find bash (needed to run agency-agents' install.sh). Install Git for Windows, then run: bash `"$agentsClone\scripts\install.sh`" --tool claude-code --no-interactive"
+    Write-Warning "  npx not found - install Node.js, then run: npx -y impeccable@latest install --scope=global --providers=claude-code --yes"
 }
 
 # ---------------------------------------------------------------------------
@@ -138,6 +137,12 @@ Write-Host @"
      -> also activates the official skills/plugins auto-sync for this account.
   3. Run: gh auth login
      -> needed for git operations against your private repos.
+  4. Run: & "`$env:USERPROFILE\.claude\setup\projects.ps1"
+     -> creates the project folder structure and clones the project repos.
+        Needs step 3 first; safe to re-run.
+
+  Everything that is deliberately NOT in the config repo - and how to restore
+  it - is documented in ~\.claude\setup\README.md
 
   Cross-device config sync is now active: Claude Code will ask you at the
   start of a session if there are changes to pull, and after a turn if
