@@ -21,17 +21,20 @@ Safe to re-run at any time - every step is idempotent.
 1. Installs Git, Node.js LTS, VS Code, GitHub CLI, and Windows Terminal via `winget`.
 2. Installs the Claude Code CLI (native installer, no Node/npm required for this step).
 3. Checks out [claude-code-config](https://github.com/Bifrost41g/claude-code-config)
-   into `~/.claude`, so only `settings.json`, `CLAUDE.md`, `hooks/`, `commands/`
-   and `keybindings.json` are tracked - sessions, cache, and credentials are
-   never touched.
-4. Clones and installs the [agency-agents](https://github.com/msitarzewski/agency-agents)
-   subagent library.
+   into `~/.claude`, so only `settings.json`, `CLAUDE.md`, the curated `agents/`,
+   `hooks/`, `setup/` and the self-written `skills/` are tracked - sessions,
+   cache, credentials, and per-machine plugin state are never touched.
+4. Installs the Impeccable design skill via `npx`. Only tools with their own
+   installer belong here; the subagents ship inside the config repo from step 3.
 
 ## After running it
 
 - Restart the terminal so newly installed programs are on `PATH`.
 - Run `claude login` (also enables the official Anthropic-account skills/plugins sync).
 - Run `gh auth login`.
+- Run `& "$env:USERPROFILE\.claude\setup\projects.ps1"` to create the project
+  folder structure and clone the project repos. Needs `gh auth login` first,
+  and is safe to re-run.
 
 From then on, Claude Code will ask at the start of a session whether to pull
 config changes from another PC, and after a response whether to push local

@@ -6,7 +6,7 @@
     1. Installs base programs via winget (Git, Node.js LTS, VS Code, GitHub CLI, Windows Terminal)
     2. Installs the Claude Code CLI natively if missing
     3. Checks out the private claude-code-config repo into ~/.claude (settings, CLAUDE.md,
-       hooks/, commands/, keybindings, the curated agents/ and setup/ - never touches
+       the curated agents/, hooks/, setup/ and self-written skills/ - never touches
        sessions/cache/credentials)
     4. Installs the Impeccable design skill (installer-managed, so not in the repo)
     5. Prints next steps (claude login, gh auth login, project folder setup)
@@ -98,7 +98,7 @@ try {
     }
     git fetch --quiet origin
     git checkout -B main origin/main --force
-    Write-Host "  ~/.claude now tracks $configRepoUrl (settings.json, CLAUDE.md, hooks/, commands/, keybindings.json)"
+    Write-Host "  ~/.claude now tracks $configRepoUrl (settings.json, CLAUDE.md, agents/, hooks/, setup/, skills/)"
 }
 finally {
     Pop-Location
